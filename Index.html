@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Onchain Notes dApp</title>
+</head>
+
+<body style="font-family:Arial; text-align:center; background:#0f172a; color:white;">
+
+<h1>📝 Onchain Notes</h1>
+
+<button onclick="connectWallet()">Connect Wallet</button>
+<p id="status"></p>
+
+<br>
+
+<input type="text" id="noteInput" placeholder="Write your note">
+<br><br>
+
+<button onclick="saveNote()">Save Note (Paid)</button>
+<button onclick="getNotes()">Get My Notes</button>
+
+<h3>My Notes:</h3>
+<p id="output"></p>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+
+<script>
+let contract;
+let signer;
+
+const contractAddress = "0x50a4c92de36633f4da6c6fb0f1a9736ead9df4fb";
+
+const abi = [
+  "function saveNote(string memory _note) payable",
+  "function getMyNotes() view returns (string[] memory)"
+];
+
+async function connectWallet() {
+  await window.ethereum.request({ method: "eth_requestAccounts" });
+
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  signer = await provider.getSigner();
+
+  contract = new ethers.Contract(contractAddress, abi, signer);
+
+  document.getElementById("status").innerText = "Wallet Connected ✅";
+}
+
+async function saveNote() {
+  try {
+    const note = document.getElementById("noteInput").value;
+
+    document.getElementById("status").innerText = "Saving... ⏳";
+
+    const tx = await contract.saveNote(note, {
+      value: "100000000000000"
+    });
+
+    await tx.wait();
+
+    document.getElementById("status").innerText = "Saved ✅";
+
+  } catch (err) {
+    document.getElementById("status").innerText = "Error ❌";
+  }
+}
+
+async function getNotes() {
+  const notes = await contract.getMyNotes();
+
+  document.getElementById("output").innerText = notes.join(" | ");
+}
+</script>
+
+</body>
+</html>
